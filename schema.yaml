@@ -1,0 +1,177 @@
+## Copyright (c) 2024, Oracle and/or its affiliates.
+## Licensed under the Universal Permissive License v 1.0 as shown at http://oss.oracle.com/licenses/upl
+
+title: "OCI Resource Manager Docker Compute Stack"
+description: "Automate Docker setup on your OCI compute instance"
+schemaVersion: 1.1.0
+version: "20221114"
+locale: "en"
+
+variableGroups:
+- title: "General Configuration"
+  visible: false
+  variables:
+  - compartment_ocid
+  - tenancy_ocid
+  - region
+  - image_operating_system
+  - image_operating_system_version
+
+- title: "Display Name"
+  visible: true  
+  variables:
+  - compute_display_name
+
+- title: "Network Configuration"
+  visible: true  
+  variables:
+  - vcn_cidr_block
+  - vcn_public_subnet_cidr_block
+  - vcn_private_subnet_cidr_block
+
+- title: "Compute Shape"
+  variables:
+  - instance_shape
+  - image_operating_system
+  - image_operating_system_version
+
+- title: "Availability Domain"
+  variables:
+  - ad
+
+- title: "SSH Key Configuration"
+  variables:
+  - ssh_public_key
+
+- title: "Block Volume Settings"
+  variables:
+  - mount_dir
+  - volume_size_in_gbs
+
+- title: "Docker Settings"
+  variables:
+  - docker_repo_url
+  - docker_compose_version
+
+- title: "Ports"
+  variables:
+  - web_server_port
+  - trace_server_port
+
+- title: "Instance User"
+  variables:
+  - username
+
+
+variables:
+  
+  vcn_cidr_block:
+    type: string
+    title: "Select a CIDR block for the VCN"
+    description: "A VCN covers one or more IPv4 CIDR blocks or IPv6 prefixes of your choice. The allowable VCN size range is /16 to /30. Example: 10.0.0.0/16."
+
+  vcn_public_subnet_cidr_block:
+    type: string
+    title: "Select a CIDR block for the public subnet"
+    description: "The allowable VCN size range is /16 to /30. Example: 10.0.0.0/24."
+
+  vcn_private_subnet_cidr_block:
+    type: string
+    title: "Select a CIDR block for the public subnet"
+    description: "The allowable VCN size range is /16 to /30. Example: 10.0.1.0/24."
+
+  instance_shape:
+    #type: oci:core:instanceshape:name
+    # determines values for compute shape prepopulation from selected compartment
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    type: enum
+    enum:
+      - "VM.Standard.E2.1.Micro"
+      - "VM.Standard2.1"
+      - "VM.Standard2.2"
+      - "VM.Standard.E2.1"
+    title: "Select a shape for the compute instances"
+    description: "A shape is a template that determines the number of CPUs, amount of memory, and other resources allocated to a newly created instance."
+
+  image_operating_system:
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    type: enum
+    enum:
+      - "Oracle Linux"
+    title: "Image operating system"
+    description: "Currently Oracle Linux is the only supported operating system."
+
+  image_operating_system_version:
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    type: enum
+    enum:
+      - "7.9"
+      - "8"
+      - "9"
+    title: "Operating system version"
+    description: "Select image operating system version."
+
+  ad:
+    type: enum
+    enum:
+      - "1"
+      - "2"
+      - "3"
+    title: "Select the Availability Domain"
+    description: "The Availability Domain is where your instance will be placed"
+  
+  ssh_public_key:
+    type: oci:core:ssh:publickey
+    title: "SSH Public Key"
+    description: "The public SSH key for the key-pair that you want to use, if you wish to login to the instances over SSH."
+    additionalProps:
+      allowMultiple: true
+    pattern: "((^(ssh-rsa AAAAB3NzaC1yc2|ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNT|ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzOD|ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1Mj|ssh-ed25519 AAAAC3NzaC1lZDI1NTE5|ssh-dss AAAAB3NzaC1kc3)[0-9A-Za-z+\/]+[=]{0,3})( [^,]*)?)(,((ssh-rsa AAAAB3NzaC1yc2|ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNT|ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzOD|ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1Mj|ssh-ed25519 AAAAC3NzaC1lZDI1NTE5|ssh-dss AAAAB3NzaC1kc3)[0-9A-Za-z+\/]+[=]{0,3})( [^,]*)?)*$"
+
+  docker_compose_version:
+    type: enum
+    enum:
+      - "1.29.2"
+      - "2.10.2"
+      - "2.11.2"
+      - "2.12.2"
+      - "2.13.0"
+      - "2.14.2"
+      - "2.15.1"
+      - "2.16.0"
+      - "2.17.2"
+    title: "Select the Docker Compose version"
+    description: "Docker Compose versions."
+
+  docker_repo_url:
+    type: string
+    title: "Docker Repository URL"
+    description: "Select the Docker repository URL"
+
+  mount_dir:
+    type: string
+    title: "Select the block volume mount directory"
+    description: "Block volume mount directory"
+
+  volume_size_in_gbs:
+    type: string
+    title: "Block volume size (GB)"
+    description: "Select the block volume size in GBs"
+
+  web_server_port:
+    type: string
+    title: "Web server port"
+    description: "Select the web server port"
+
+  trace_server_port:
+    type: string
+    title: "Trace service port"
+    description: "Select the Trace service port"
+
+  username:
+    type: string
+    title: "User Name"
+    description: "Instance user name"
